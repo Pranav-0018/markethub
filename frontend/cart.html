@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart - MiniMart</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header / Navbar Container -->
+  <div id="navbar"></div>
+
+  <main class="container" style="margin-top: 2rem;">
+    <div class="page-header">
+      <h1>Your Shopping Cart</h1>
+      <button id="clear-cart-btn" class="btn btn-outline btn-sm" onclick="handleClearCart()">
+        🗑️ Empty Cart
+      </button>
+    </div>
+
+    <div id="cart-content-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+      <!-- Left: Cart Items Table -->
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive">
+          <table class="custom-table" id="cart-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="cart-items-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="empty-cart-message" style="display: none; padding: 3rem; text-align: center;">
+          <h3 style="color: var(--text-muted); margin-bottom: 0.5rem;">Your Cart is Empty</h3>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            Explore our verified sellers and find something you love!
+          </p>
+          <a href="index.html" class="btn btn-primary">Start Shopping &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Right: Order Summary Card -->
+      <div class="card" id="cart-summary-card">
+        <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          Order Summary
+        </h3>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+          <span style="color: var(--text-muted);">Total Items:</span>
+          <span id="summary-total-qty" style="font-weight: 600;">0</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.95rem;">
+          <span style="color: var(--text-muted);">Estimated Delivery:</span>
+          <span style="color: var(--success); font-weight: 600;">FREE</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color); font-size: 1.2rem;">
+          <strong>Total Amount:</strong>
+          <strong id="summary-total-price" style="color: var(--text-main);">₹0</strong>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius); padding: 0.75rem; margin: 1.25rem 0; font-size: 0.8rem; color: #64748b;">
+          💡 <strong>Commission Notice:</strong> A 10% platform commission is calculated automatically and split per seller upon checkout.
+        </div>
+
+        <button id="checkout-btn" class="btn btn-secondary btn-block" onclick="proceedToCheckout()">
+          Proceed to Checkout &rarr;
+        </button>
+
+        <a href="index.html" class="btn btn-outline btn-block" style="margin-top: 0.5rem;">
+          Continue Shopping
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 MiniMart Multi-Vendor Platform. Built for college viva demonstration.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    function renderCartPage() {
+      const cart = getCart();
+      const tbody = document.getElementById('cart-items-body');
+      const table = document.getElementById('cart-table');
+      const emptyMsg = document.getElementById('empty-cart-message');
+      const clearBtn = document.getElementById('clear-cart-btn');
+      const checkoutBtn = document.getElementById('checkout-btn');
+
+      if (cart.length === 0) {
+        table.style.display = 'none';
+        emptyMsg.style.display = 'block';
+        clearBtn.style.display = 'none';
+        checkoutBtn.disabled = true;
+        document.getElementById('summary-total-qty').textContent = '0';
+        document.getElementById('summary-total-price').textContent = '₹0';
+        return;
+      }
+
+      table.style.display = 'table';
+      emptyMsg.style.display = 'none';
+      clearBtn.style.display = 'inline-flex';
+      checkoutBtn.disabled = false;
+
+      let grandTotal = 0;
+      let totalQty = 0;
+
+      tbody.innerHTML = cart.map((item) => {
+        const lineTotal = item.price * item.quantity;
+        grandTotal += lineTotal;
+        totalQty += item.quantity;
+
+        return `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <img src="${item.image}" alt="${item.name}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb;">
+                <div>
+                  <a href="product.html?id=${item.product}" style="font-weight: 600; text-decoration: none; color: var(--text-main);">
+                    ${item.name}
+                  </a>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    Seller: ${item.sellerName || 'Verified Seller'}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td style="font-weight: 600;">₹${item.price.toLocaleString()}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <button class="btn btn-outline btn-sm" style="padding: 0.15rem 0.5rem;" onclick="handleUpdateQty('${item.product}', ${item.quantity - 1})">-</button>
+                <input type="number" min="1" max="${item.stock || 99}" value="${item.quantity}" style="width: 50px; text-align: center; padding: 0.2rem; border: 1px solid var(--border-color); border-radius: 4px;" onchange="handleUpdateQty('${item.product}', this.value)">
+                <button class="btn btn-outline btn-sm" style="padding: 0.15rem 0.5rem;" onclick="handleUpdateQty('${item.product}', ${item.quantity + 1})">+</button>
+              </div>
+            </td>
+            <td style="font-weight: 700; color: #111827;">₹${lineTotal.toLocaleString()}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="handleRemove('${item.product}')">
+                Remove
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('summary-total-qty').textContent = totalQty;
+      document.getElementById('summary-total-price').textContent = `₹${grandTotal.toLocaleString()}`;
+    }
+
+    function handleUpdateQty(productId, qty) {
+      updateQty(productId, qty);
+      renderCartPage();
+    }
+
+    function handleRemove(productId) {
+      removeFromCart(productId);
+      renderCartPage();
+    }
+
+    function handleClearCart() {
+      if (confirm('Are you sure you want to empty your shopping cart?')) {
+        clearCart();
+        renderCartPage();
+      }
+    }
+
+    function proceedToCheckout() {
+      const user = getUser();
+      if (!user) {
+        alert('Please log in or register as a customer to checkout.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (user.role !== 'customer') {
+        alert(`You are logged in as '${user.role}'. Only customers can place orders.`);
+        return;
+      }
+
+      window.location.href = 'checkout.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', renderCartPage);
+  </script>
+</body>
+</html>

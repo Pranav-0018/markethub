@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - MiniMart Multi-Vendor</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header / Navbar Container -->
+  <div id="navbar"></div>
+
+  <main class="container" style="max-width: 480px; margin-top: 3rem;">
+    <div class="card">
+      <h2 style="margin-bottom: 0.5rem; text-align: center;">Welcome Back</h2>
+      <p style="color: var(--text-muted); text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">
+        Sign in to your customer, seller, or admin account
+      </p>
+
+      <!-- Alert Box for Error / Success Messages -->
+      <div id="message-box" style="display: none;"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="e.g. user@shop.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" id="login-btn" class="btn btn-primary btn-block" style="margin-top: 1rem;">
+          Sign In
+        </button>
+      </form>
+
+      <p style="text-align: center; margin-top: 1.25rem; font-size: 0.9rem;">
+        Don't have an account? <a href="register.html" style="color: var(--primary); font-weight: 600;">Register here</a>
+      </p>
+
+      <!-- Quick Fill Demo Accounts for Viva Presentation -->
+      <div style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px dashed #d1d5db;">
+        <p style="font-size: 0.8rem; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 0.75rem; text-align: center;">
+          ⚡ Quick Fill Demo Accounts (For Viva)
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillCreds('admin@shop.com', 'admin123')">
+            🛡️ Admin
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillCreds('user@shop.com', 'user123')">
+            👤 Customer
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillCreds('seller.tech@shop.com', 'seller123')">
+            💻 Tech Seller
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fillCreds('seller.fashion@shop.com', 'seller123')">
+            👗 Fashion Seller
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 MiniMart Multi-Vendor Platform. Built for college viva demonstration.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Quick fill helper for demo convenience
+    function fillCreds(email, password) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = password;
+    }
+
+    // Handle Login Form Submission
+    const loginForm = document.getElementById('login-form');
+    const msgBox = document.getElementById('message-box');
+    const loginBtn = document.getElementById('login-btn');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+      msgBox.style.display = 'none';
+
+      try {
+        const res = await apiFetch('/auth/login', {
+          method: 'POST',
+          body: { email, password }
+        });
+
+        // Save JWT token & user profile
+        saveLogin(res);
+
+        msgBox.className = 'alert alert-success';
+        msgBox.textContent = 'Login successful! Redirecting...';
+        msgBox.style.display = 'block';
+
+        setTimeout(() => {
+          if (res.user.role === 'admin') {
+            window.location.href = 'admin.html';
+          } else if (res.user.role === 'seller') {
+            window.location.href = 'seller.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+        }, 600);
+      } catch (err) {
+        msgBox.className = 'alert alert-danger';
+        msgBox.textContent = err.message || 'Login failed. Please check your credentials.';
+        msgBox.style.display = 'block';
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

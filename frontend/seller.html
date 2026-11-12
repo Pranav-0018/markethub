@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Dashboard - MiniMart</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header / Navbar Container -->
+  <div id="navbar"></div>
+
+  <main class="container" style="margin-top: 2rem;">
+    <!-- Seller Welcome Header -->
+    <div class="page-header">
+      <div>
+        <h1 id="seller-shop-heading">Seller Dashboard</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="seller-subheading">
+          Manage your inventory, monitor sales, and update order deliveries
+        </p>
+      </div>
+      <div>
+        <button class="btn btn-primary" onclick="openAddProductModal()">
+          + Add New Product
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert / Message container -->
+    <div id="seller-alert" style="display: none;"></div>
+
+    <!-- 1. Stats Cards Grid -->
+    <section class="stats-grid" id="stats-container">
+      <div class="stat-card">
+        <span class="stat-title">Total Orders</span>
+        <div class="stat-value" id="stat-orders">0</div>
+        <span class="stat-desc">Customer orders with your items</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-title">Gross Sales</span>
+        <div class="stat-value" id="stat-sales" style="color: var(--primary);">₹0</div>
+        <span class="stat-desc">Total line items price</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-title">Platform Fee (10%)</span>
+        <div class="stat-value" id="stat-commission" style="color: var(--warning);">₹0</div>
+        <span class="stat-desc">Marketplace commission</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-title">Net Earnings (90%)</span>
+        <div class="stat-value" id="stat-earnings" style="color: var(--success);">₹0</div>
+        <span class="stat-desc">Take-home revenue</span>
+      </div>
+    </section>
+
+    <!-- 2. Products Management Section -->
+    <section class="card" style="margin-top: 2rem;">
+      <div class="page-header" style="margin-bottom: 1rem;">
+        <h3>My Listed Products</h3>
+        <span id="products-count-badge" class="badge badge-info">0 Products</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="seller-products-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. Orders Management Section (Filtered to this seller only) -->
+    <section class="card" style="margin-top: 2rem;">
+      <div class="page-header" style="margin-bottom: 1rem;">
+        <div>
+          <h3>Orders for My Shop</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Shows only items sold by your shop. Update delivery status to keep customers notified.
+          </p>
+        </div>
+        <span id="orders-count-badge" class="badge badge-info">0 Orders</span>
+      </div>
+
+      <div id="seller-orders-container">
+        <!-- Dynamically populated -->
+      </div>
+    </section>
+
+    <!-- ADD / EDIT PRODUCT MODAL (Hidden by default) -->
+    <div id="product-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; padding: 2rem 1rem;">
+      <div class="card" style="max-width: 600px; margin: 2rem auto; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+          <h3 id="modal-title">Add New Product</h3>
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeProductModal()">✕</button>
+        </div>
+
+        <form id="product-form" enctype="multipart/form-data">
+          <input type="hidden" id="prod-id">
+
+          <div class="form-group">
+            <label for="prod-name">Product Title <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="prod-name" class="form-control" placeholder="e.g. Wireless Bluetooth Earbuds" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prod-category">Category <span style="color: var(--danger);">*</span></label>
+              <select id="prod-category" class="form-control" required>
+                <!-- Loaded via JS -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prod-price">Price (₹) <span style="color: var(--danger);">*</span></label>
+              <input type="number" id="prod-price" class="form-control" min="0" placeholder="e.g. 1499" required>
+            </div>
+
+            <div class="form-group">
+              <label for="prod-stock">Stock Quantity <span style="color: var(--danger);">*</span></label>
+              <input type="number" id="prod-stock" class="form-control" min="0" placeholder="e.g. 25" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-desc">Description <span style="color: var(--danger);">*</span></label>
+            <textarea id="prod-desc" class="form-control" placeholder="Key features, specifications, and details..." required></textarea>
+          </div>
+
+          <!-- Dual Image Upload: File upload OR Image URL -->
+          <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label for="prod-file">Upload Image File (Multer / Cloudinary):</label>
+              <input type="file" id="prod-file" accept="image/*" class="form-control">
+              <small style="color: var(--text-muted); font-size: 0.8rem;">Supports JPG, PNG, WEBP. Uploads to Cloudinary (or local server).</small>
+            </div>
+
+            <div style="text-align: center; font-weight: 600; color: var(--text-muted); margin: 0.5rem 0;">- OR -</div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="prod-url">Direct Image URL (Fallback):</label>
+              <input type="url" id="prod-url" class="form-control" placeholder="https://images.unsplash.com/...">
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+            <button type="submit" id="save-prod-btn" class="btn btn-primary">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 MiniMart Multi-Vendor Platform. Built for college viva demonstration.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Guard: Seller only
+    requireRole('seller');
+
+    let categoriesList = [];
+
+    // Load Seller Analytics
+    async function loadSellerStats() {
+      try {
+        const res = await apiFetch('/seller/stats');
+        const s = res.stats;
+
+        document.getElementById('stat-orders').textContent = s.totalOrders || 0;
+        document.getElementById('stat-sales').textContent = `₹${(s.totalSales || 0).toLocaleString()}`;
+        document.getElementById('stat-commission').textContent = `₹${(s.totalCommission || 0).toLocaleString()}`;
+        document.getElementById('stat-earnings').textContent = `₹${(s.totalEarnings || 0).toLocaleString()}`;
+
+        if (s.shopName) {
+          document.getElementById('seller-shop-heading').textContent = `🏪 ${s.shopName}`;
+        }
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    // Load Categories for modal dropdown
+    async function loadCategories() {
+      try {
+        const res = await apiFetch('/categories');
+        categoriesList = res.categories || [];
+        const select = document.getElementById('prod-category');
+        select.innerHTML = '<option value="">-- Choose Category --</option>';
+        categoriesList.forEach((c) => {
+          const opt = document.createElement('option');
+          opt.value = c._id;
+          opt.textContent = c.name;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    }
+
+    // Load Seller's Products
+    async function loadSellerProducts() {
+      const tbody = document.getElementById('seller-products-body');
+      const badge = document.getElementById('products-count-badge');
+
+      try {
+        const res = await apiFetch('/seller/products');
+        const products = res.products || [];
+        badge.textContent = `${products.length} Products`;
+
+        if (products.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                You have not added any products yet. Click "+ Add New Product" to start selling.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = products.map((p) => {
+          return `
+            <tr>
+              <td>
+                <img src="${p.image}" alt="${p.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e7eb;">
+              </td>
+              <td>
+                <strong>${p.name}</strong>
+              </td>
+              <td>${p.category?.name || 'Unassigned'}</td>
+              <td style="font-weight: 700;">₹${p.price.toLocaleString()}</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                  <span class="badge ${p.stock > 0 ? 'badge-approved' : 'badge-rejected'}">${p.stock}</span>
+                  <button class="btn btn-outline btn-sm" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" onclick="quickEditStock('${p._id}', ${p.stock})">
+                    ✏️ Edit
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.35rem;">
+                  <button class="btn btn-outline btn-sm" onclick='openEditProductModal(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+                    Edit
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}')">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color: var(--danger); text-align: center;">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Quick Stock Update
+    async function quickEditStock(id, currentStock) {
+      const newStock = prompt('Enter new stock quantity:', currentStock);
+      if (newStock === null) return;
+
+      const num = parseInt(newStock, 10);
+      if (isNaN(num) || num < 0) {
+        alert('Please enter a valid positive number for stock');
+        return;
+      }
+
+      try {
+        await apiFetch(`/seller/products/${id}/stock`, {
+          method: 'PUT',
+          body: { stock: num }
+        });
+        showToast('Stock quantity updated!');
+        loadSellerProducts();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Delete Product
+    async function deleteProduct(id) {
+      if (!confirm('Are you sure you want to permanently delete this product?')) return;
+
+      try {
+        await apiFetch(`/seller/products/${id}`, { method: 'DELETE' });
+        showToast('Product deleted successfully');
+        loadSellerProducts();
+        loadSellerStats();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Load Seller's Orders (only their own items)
+    async function loadSellerOrders() {
+      const container = document.getElementById('seller-orders-container');
+      const badge = document.getElementById('orders-count-badge');
+
+      try {
+        const res = await apiFetch('/seller/orders');
+        const orders = res.orders || [];
+        badge.textContent = `${orders.length} Orders`;
+
+        if (orders.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+              No customer orders received yet. Once customers buy your products, they will appear here.
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = orders.map((order) => {
+          const dateStr = new Date(order.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+
+          return `
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem; background: #fafafa;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem;">
+                <div>
+                  <strong style="color: #1e293b; font-size: 1rem;">Order #${order._id.substring(order._id.length - 8).toUpperCase()}</strong>
+                  <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">(${dateStr})</span>
+                  <div style="font-size: 0.85rem; color: #475569; margin-top: 0.2rem;">
+                    Customer: <strong>${order.customer?.name || 'Customer'}</strong> (${order.customer?.email || 'N/A'})
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <span class="badge ${order.paymentStatus === 'paid' ? 'badge-paid' : 'badge-pending'}">
+                    Payment: ${order.paymentStatus}
+                  </span>
+
+                  <!-- Delivery Status Dropdown -->
+                  <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <label style="font-size: 0.8rem; font-weight: 600;">Status:</label>
+                    <select class="form-control" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.85rem;" onchange="updateDeliveryStatus('${order._id}', this.value)">
+                      <option value="placed" ${order.deliveryStatus === 'placed' ? 'selected' : ''}>Placed</option>
+                      <option value="shipped" ${order.deliveryStatus === 'shipped' ? 'selected' : ''}>Shipped</option>
+                      <option value="delivered" ${order.deliveryStatus === 'delivered' ? 'selected' : ''}>Delivered</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Shipping Address -->
+              <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem;">
+                📍 Deliver To: <strong>${order.shippingAddress}</strong>
+              </div>
+
+              <!-- Seller's Line Items -->
+              <div style="background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 0.4rem;">
+                  Your Items in this Order:
+                </div>
+                ${order.items.map((it) => `
+                  <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.3rem 0; border-bottom: 1px dashed #f1f5f9;">
+                    <span>${it.name} &times; ${it.quantity}</span>
+                    <strong>₹${(it.price * it.quantity).toLocaleString()}</strong>
+                  </div>
+                `).join('')}
+
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.5rem; font-size: 0.9rem;">
+                  <span>Subtotal: ₹${order.sellerSubtotal.toLocaleString()}</span>
+                  <span style="color: var(--warning);">Admin Fee (10%): -₹${order.commissionDeducted.toLocaleString()}</span>
+                  <strong style="color: var(--success); font-size: 1rem;">Your Earnings: ₹${order.sellerEarnings.toLocaleString()}</strong>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+      }
+    }
+
+    // Update Order Delivery Status
+    async function updateDeliveryStatus(orderId, newStatus) {
+      try {
+        await apiFetch(`/seller/orders/${orderId}/status`, {
+          method: 'PUT',
+          body: { deliveryStatus: newStatus }
+        });
+        showToast(`Delivery status updated to '${newStatus}'`);
+      } catch (err) {
+        alert(err.message);
+        loadSellerOrders();
+      }
+    }
+
+    // Modal Helpers
+    function openAddProductModal() {
+      document.getElementById('modal-title').textContent = 'Add New Product';
+      document.getElementById('product-form').reset();
+      document.getElementById('prod-id').value = '';
+      document.getElementById('product-modal').style.display = 'block';
+    }
+
+    function openEditProductModal(product) {
+      document.getElementById('modal-title').textContent = 'Edit Product';
+      document.getElementById('prod-id').value = product._id;
+      document.getElementById('prod-name').value = product.name;
+      document.getElementById('prod-category').value = product.category?._id || product.category;
+      document.getElementById('prod-price').value = product.price;
+      document.getElementById('prod-stock').value = product.stock;
+      document.getElementById('prod-desc').value = product.description;
+      document.getElementById('prod-url').value = product.image || '';
+      document.getElementById('prod-file').value = '';
+      document.getElementById('product-modal').style.display = 'block';
+    }
+
+    function closeProductModal() {
+      document.getElementById('product-modal').style.display = 'none';
+    }
+
+    // Handle Add / Edit Product Submit (Supports FormData for Multer/Cloudinary)
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const prodId = document.getElementById('prod-id').value;
+      const isEdit = Boolean(prodId);
+
+      const name = document.getElementById('prod-name').value.trim();
+      const category = document.getElementById('prod-category').value;
+      const price = document.getElementById('prod-price').value;
+      const stock = document.getElementById('prod-stock').value;
+      const description = document.getElementById('prod-desc').value.trim();
+      const fileInput = document.getElementById('prod-file');
+      const imageUrl = document.getElementById('prod-url').value.trim();
+
+      const saveBtn = document.getElementById('save-prod-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        // Construct FormData so multer receives files if present
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('category', category);
+        formData.append('price', price);
+        formData.append('stock', stock);
+        formData.append('description', description);
+
+        if (fileInput.files.length > 0) {
+          formData.append('image', fileInput.files[0]);
+        } else if (imageUrl) {
+          formData.append('image', imageUrl);
+        }
+
+        const endpoint = isEdit ? `/seller/products/${prodId}` : '/seller/products';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        await apiFetch(endpoint, {
+          method,
+          body: formData
+        });
+
+        showToast(isEdit ? 'Product updated successfully!' : 'Product added successfully!', 'success');
+        closeProductModal();
+        loadSellerProducts();
+        loadSellerStats();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Product';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSellerStats();
+      loadCategories();
+      loadSellerProducts();
+      loadSellerOrders();
+    });
+  </script>
+</body>
+</html>

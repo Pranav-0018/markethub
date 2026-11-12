@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - MiniMart</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header / Navbar Container -->
+  <div id="navbar"></div>
+
+  <main class="container" style="margin-top: 2rem;">
+    <!-- Admin Header -->
+    <div class="page-header">
+      <div>
+        <h1>Super Admin Portal</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Control platform operations, moderate sellers, track marketplace revenue, and view seller reports
+        </p>
+      </div>
+      <div>
+        <span class="badge badge-admin" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
+          🛡️ Role: Platform Administrator
+        </span>
+      </div>
+    </div>
+
+    <!-- Admin Tab Navigation -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-dashboard')">📊 Overview Stats</button>
+      <button class="tab-btn" onclick="switchTab('tab-sellers')">🏪 Sellers & Approvals</button>
+      <button class="tab-btn" onclick="switchTab('tab-reports')">📈 Per-Seller Sales Report</button>
+      <button class="tab-btn" onclick="switchTab('tab-categories')">🗂️ Categories</button>
+      <button class="tab-btn" onclick="switchTab('tab-products')">📦 All Products</button>
+      <button class="tab-btn" onclick="switchTab('tab-orders')">🛍️ Platform Orders</button>
+      <button class="tab-btn" onclick="switchTab('tab-customers')">👥 Customers</button>
+    </nav>
+
+    <!-- TAB 1: OVERVIEW STATS -->
+    <section id="tab-dashboard" class="tab-pane active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-title">Total Orders</span>
+          <div class="stat-value" id="dash-orders">0</div>
+          <span class="stat-desc">Across all marketplace stores</span>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-title">Platform Gross Sales</span>
+          <div class="stat-value" id="dash-sales" style="color: var(--primary);">₹0</div>
+          <span class="stat-desc">Total gross transaction volume</span>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-title">Platform Commission (10%)</span>
+          <div class="stat-value" id="dash-commission" style="color: var(--success);">₹0</div>
+          <span class="stat-desc">Admin marketplace profit</span>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-title">Total Seller Payouts</span>
+          <div class="stat-value" id="dash-payout" style="color: var(--info);">₹0</div>
+          <span class="stat-desc">90% disbursed to sellers</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3>Platform Commission Rule & Viva Quick Reference</h3>
+        <p style="color: #4b5563; margin-top: 0.5rem; line-height: 1.6;">
+          • Every customer purchase is split cleanly: <strong>10% Platform Commission</strong> goes to the marketplace administrator, and <strong>90% Net Revenue</strong> is allocated to the respective merchant.<br>
+          • In a multi-vendor cart with items from multiple sellers, each seller receives and fulfills only their own items.<br>
+          • New sellers must receive administrator approval before listing or logging in to their dashboard.
+        </p>
+      </div>
+    </section>
+
+    <!-- TAB 2: SELLERS & APPROVALS -->
+    <section id="tab-sellers" class="tab-pane">
+      <div class="card">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <div>
+            <h3>Seller Applications & Management</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Approve or reject sellers. Pending sellers cannot log in until approved.
+            </p>
+          </div>
+          <span id="sellers-count-badge" class="badge badge-info">0 Sellers</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Seller Name</th>
+                <th>Shop Name</th>
+                <th>Email</th>
+                <th>Registered</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sellers-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: PER-SELLER SALES REPORT (10% Commission Breakdown) -->
+    <section id="tab-reports" class="tab-pane">
+      <div class="card">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <div>
+            <h3>Multi-Vendor Financial & Commission Report</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Detailed breakdown of items sold, gross revenue, admin commission (10%), and seller payout (90%).
+            </p>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="loadReports()">🔄 Refresh Report</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Shop / Seller Name</th>
+                <th>Email</th>
+                <th>Units Sold</th>
+                <th>Gross Sales</th>
+                <th>Admin Commission (10%)</th>
+                <th>Net Seller Payout (90%)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="reports-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CATEGORIES MANAGEMENT -->
+    <section id="tab-categories" class="tab-pane">
+      <div class="card">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <h3>Product Categories</h3>
+          <form id="create-category-form" style="display: flex; gap: 0.5rem;">
+            <input type="text" id="new-cat-name" class="form-control" placeholder="New Category Name..." style="width: 250px;" required>
+            <button type="submit" class="btn btn-primary btn-sm">+ Add Category</button>
+          </form>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Category Name</th>
+                <th>Created Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="categories-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ALL PRODUCTS (MODERATION) -->
+    <section id="tab-products" class="tab-pane">
+      <div class="card">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <div>
+            <h3>All Listed Products</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Admin can inspect or remove inappropriate items</p>
+          </div>
+          <span id="admin-products-count" class="badge badge-info">0 Products</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Seller Shop</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-products-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: PLATFORM ORDERS -->
+    <section id="tab-orders" class="tab-pane">
+      <div class="card">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <div>
+            <h3>All Customer Orders</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Global ledger of all placed and fulfilled purchases</p>
+          </div>
+          <span id="admin-orders-count" class="badge badge-info">0 Orders</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Items Count</th>
+                <th>Total (₹)</th>
+                <th>Commission (10%)</th>
+                <th>Payment</th>
+                <th>Delivery</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: REGISTERED CUSTOMERS -->
+    <section id="tab-customers" class="tab-pane">
+      <div class="card">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <h3>Registered Customers</h3>
+          <span id="admin-customers-count" class="badge badge-info">0 Customers</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Email Address</th>
+                <th>Joined Date</th>
+              </tr>
+            </thead>
+            <tbody id="admin-customers-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 MiniMart Multi-Vendor Platform. Built for college viva demonstration.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Ensure admin only
+    requireRole('admin');
+
+    // Tab Switching Helper
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+
+      // Auto-load data for that tab
+      if (tabId === 'tab-dashboard' || tabId === 'tab-reports') loadReports();
+      if (tabId === 'tab-sellers') loadSellers();
+      if (tabId === 'tab-categories') loadCategories();
+      if (tabId === 'tab-products') loadProducts();
+      if (tabId === 'tab-orders') loadOrders();
+      if (tabId === 'tab-customers') loadCustomers();
+    }
+
+    // 1. Load Overview Stats & Per-Seller Reports
+    async function loadReports() {
+      try {
+        const res = await apiFetch('/admin/reports');
+        const s = res.summary;
+        const sellers = res.sellerReport || [];
+
+        // Dashboard Stat Cards
+        document.getElementById('dash-orders').textContent = s.totalOrders || 0;
+        document.getElementById('dash-sales').textContent = `₹${(s.totalSales || 0).toLocaleString()}`;
+        document.getElementById('dash-commission').textContent = `₹${(s.totalCommission || 0).toLocaleString()}`;
+        document.getElementById('dash-payout').textContent = `₹${(s.totalSellerPayout || 0).toLocaleString()}`;
+
+        // Sales Report Table
+        const tbody = document.getElementById('reports-table-body');
+        if (sellers.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--text-muted);">No seller records found</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = sellers.map((seller) => {
+          return `
+            <tr>
+              <td><strong>${seller.shopName}</strong> (${seller.name})</td>
+              <td>${seller.email}</td>
+              <td style="font-weight: 600;">${seller.unitsSold} units</td>
+              <td style="font-weight: 700;">₹${seller.totalSales.toLocaleString()}</td>
+              <td style="font-weight: 700; color: var(--warning);">₹${seller.commissionPaid.toLocaleString()}</td>
+              <td style="font-weight: 700; color: var(--success);">₹${seller.netPayout.toLocaleString()}</td>
+              <td><span class="badge badge-${seller.status}">${seller.status}</span></td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load reports:', err);
+      }
+    }
+
+    // 2. Load Sellers and Manage Approval Status
+    async function loadSellers() {
+      const tbody = document.getElementById('sellers-table-body');
+      const badge = document.getElementById('sellers-count-badge');
+
+      try {
+        const res = await apiFetch('/admin/users?role=seller');
+        const sellers = res.users || [];
+        badge.textContent = `${sellers.length} Sellers`;
+
+        if (sellers.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem;">No sellers registered yet</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = sellers.map((s) => {
+          const dateStr = new Date(s.createdAt).toLocaleDateString();
+          return `
+            <tr>
+              <td><strong>${s.name}</strong></td>
+              <td>${s.shopName || 'N/A'}</td>
+              <td>${s.email}</td>
+              <td>${dateStr}</td>
+              <td>
+                <span class="badge badge-${s.status}">${s.status}</span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.35rem;">
+                  ${
+                    s.status !== 'approved'
+                      ? `<button class="btn btn-success btn-sm" onclick="updateSellerStatus('${s._id}', 'approved')">Approve</button>`
+                      : ''
+                  }
+                  ${
+                    s.status !== 'rejected'
+                      ? `<button class="btn btn-danger btn-sm" onclick="updateSellerStatus('${s._id}', 'rejected')">Reject</button>`
+                      : ''
+                  }
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function updateSellerStatus(sellerId, newStatus) {
+      if (!confirm(`Are you sure you want to change this seller status to '${newStatus}'?`)) return;
+
+      try {
+        await apiFetch(`/admin/sellers/${sellerId}/status`, {
+          method: 'PUT',
+          body: { status: newStatus }
+        });
+        showToast(`Seller status changed to ${newStatus}`);
+        loadSellers();
+        loadReports();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // 3. Load & Manage Categories
+    async function loadCategories() {
+      const tbody = document.getElementById('categories-table-body');
+
+      try {
+        const res = await apiFetch('/admin/categories');
+        const categories = res.categories || [];
+
+        if (categories.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:2rem;">No categories defined</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = categories.map((cat) => {
+          const dateStr = new Date(cat.createdAt).toLocaleDateString();
+          return `
+            <tr>
+              <td><strong>${cat.name}</strong></td>
+              <td>${dateStr}</td>
+              <td>
+                <button class="btn btn-danger btn-sm" onclick="deleteCategory('${cat._id}')">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="3" style="color:var(--danger);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Create Category Form
+    document.getElementById('create-category-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('new-cat-name');
+      const name = input.value.trim();
+
+      try {
+        await apiFetch('/admin/categories', {
+          method: 'POST',
+          body: { name }
+        });
+        showToast(`Category "${name}" created!`, 'success');
+        input.value = '';
+        loadCategories();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    async function deleteCategory(id) {
+      if (!confirm('Are you sure you want to delete this category?')) return;
+
+      try {
+        await apiFetch(`/admin/categories/${id}`, { method: 'DELETE' });
+        showToast('Category deleted');
+        loadCategories();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // 4. Load All Products
+    async function loadProducts() {
+      const tbody = document.getElementById('admin-products-body');
+      const badge = document.getElementById('admin-products-count');
+
+      try {
+        const res = await apiFetch('/admin/products');
+        const prods = res.products || [];
+        badge.textContent = `${prods.length} Products`;
+
+        if (prods.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem;">No products listed</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = prods.map((p) => {
+          return `
+            <tr>
+              <td>
+                <img src="${p.image}" alt="${p.name}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;">
+              </td>
+              <td><strong>${p.name}</strong></td>
+              <td>${p.category?.name || 'General'}</td>
+              <td>${p.seller?.shopName || p.seller?.name || 'Seller'}</td>
+              <td style="font-weight: 700;">₹${p.price.toLocaleString()}</td>
+              <td><span class="badge ${p.stock > 0 ? 'badge-approved' : 'badge-rejected'}">${p.stock}</span></td>
+              <td>
+                <button class="btn btn-danger btn-sm" onclick="adminDeleteProduct('${p._id}')">
+                  Remove
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function adminDeleteProduct(id) {
+      if (!confirm('Are you sure you want to remove this product from the platform?')) return;
+
+      try {
+        await apiFetch(`/admin/products/${id}`, { method: 'DELETE' });
+        showToast('Product removed');
+        loadProducts();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // 5. Load Platform Orders
+    async function loadOrders() {
+      const tbody = document.getElementById('admin-orders-body');
+      const badge = document.getElementById('admin-orders-count');
+
+      try {
+        const res = await apiFetch('/admin/orders');
+        const orders = res.orders || [];
+        badge.textContent = `${orders.length} Orders`;
+
+        if (orders.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem;">No customer orders found</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = orders.map((o) => {
+          const dateStr = new Date(o.createdAt).toLocaleDateString();
+          return `
+            <tr>
+              <td><strong>#${o._id.substring(o._id.length - 8).toUpperCase()}</strong></td>
+              <td>${o.customer?.name || 'Customer'}</td>
+              <td>${o.items.length} item(s)</td>
+              <td style="font-weight: 700;">₹${o.totalAmount.toLocaleString()}</td>
+              <td style="font-weight: 700; color: var(--warning);">₹${o.commission.toLocaleString()}</td>
+              <td><span class="badge ${o.paymentStatus === 'paid' ? 'badge-paid' : 'badge-pending'}">${o.paymentStatus}</span></td>
+              <td><span class="badge badge-${o.deliveryStatus}">${o.deliveryStatus}</span></td>
+              <td>${dateStr}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    // 6. Load Customers
+    async function loadCustomers() {
+      const tbody = document.getElementById('admin-customers-body');
+      const badge = document.getElementById('admin-customers-count');
+
+      try {
+        const res = await apiFetch('/admin/users?role=customer');
+        const customers = res.users || [];
+        badge.textContent = `${customers.length} Customers`;
+
+        if (customers.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:2rem;">No customers registered yet</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = customers.map((c) => {
+          const dateStr = new Date(c.createdAt).toLocaleDateString();
+          return `
+            <tr>
+              <td><strong>${c.name}</strong></td>
+              <td>${c.email}</td>
+              <td>${dateStr}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="3" style="color:var(--danger);">Error: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadReports();
+      loadSellers();
+    });
+  </script>
+</body>
+</html>

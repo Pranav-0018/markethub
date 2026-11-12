@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - MiniMart Multi-Vendor</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header / Navbar Container -->
+  <div id="navbar"></div>
+
+  <main class="container" style="max-width: 520px; margin-top: 2.5rem;">
+    <div class="card">
+      <h2 style="margin-bottom: 0.5rem; text-align: center;">Create an Account</h2>
+      <p style="color: var(--text-muted); text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">
+        Join as a customer to shop or as a seller to open your online store
+      </p>
+
+      <div id="message-box" style="display: none;"></div>
+
+      <form id="register-form">
+        <!-- Role Selector -->
+        <div class="form-group">
+          <label>I want to register as:</label>
+          <div style="display: flex; gap: 1.5rem; margin-top: 0.35rem;">
+            <label style="font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+              <input type="radio" name="role" value="customer" checked onchange="toggleShopField()">
+              🛍️ Customer
+            </label>
+            <label style="font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 0.4rem;">
+              <input type="radio" name="role" value="seller" onchange="toggleShopField()">
+              🏪 Seller (Requires Admin Approval)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" class="form-control" placeholder="e.g. John Doe" required>
+        </div>
+
+        <!-- Conditional Shop Name field for Sellers only -->
+        <div class="form-group" id="shop-group" style="display: none;">
+          <label for="shopName">Shop / Store Name <span style="color: var(--danger);">*</span></label>
+          <input type="text" id="shopName" class="form-control" placeholder="e.g. Apex Electronics, Trendy Styles">
+          <small style="color: var(--text-muted); font-size: 0.8rem;">
+            Your seller account will be placed in <strong>Pending</strong> status until an admin approves it.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="e.g. john@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password (min 6 characters)</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" minlength="6" required>
+        </div>
+
+        <button type="submit" id="register-btn" class="btn btn-primary btn-block" style="margin-top: 1rem;">
+          Register Account
+        </button>
+      </form>
+
+      <p style="text-align: center; margin-top: 1.25rem; font-size: 0.9rem;">
+        Already have an account? <a href="login.html" style="color: var(--primary); font-weight: 600;">Sign in here</a>
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 MiniMart Multi-Vendor Platform. Built for college viva demonstration.</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Toggle shop name input based on selected role
+    function toggleShopField() {
+      const isSeller = document.querySelector('input[name="role"]:checked').value === 'seller';
+      const shopGroup = document.getElementById('shop-group');
+      const shopInput = document.getElementById('shopName');
+
+      if (isSeller) {
+        shopGroup.style.display = 'block';
+        shopInput.required = true;
+      } else {
+        shopGroup.style.display = 'none';
+        shopInput.required = false;
+        shopInput.value = '';
+      }
+    }
+
+    const regForm = document.getElementById('register-form');
+    const msgBox = document.getElementById('message-box');
+    const regBtn = document.getElementById('register-btn');
+
+    regForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const role = document.querySelector('input[name="role"]:checked').value;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const shopName = document.getElementById('shopName').value.trim();
+
+      if (role === 'seller' && !shopName) {
+        msgBox.className = 'alert alert-danger';
+        msgBox.textContent = 'Please enter a shop name for your seller account.';
+        msgBox.style.display = 'block';
+        return;
+      }
+
+      regBtn.disabled = true;
+      regBtn.textContent = 'Creating account...';
+      msgBox.style.display = 'none';
+
+      try {
+        const res = await apiFetch('/auth/register', {
+          method: 'POST',
+          body: { name, email, password, role, shopName }
+        });
+
+        if (role === 'seller') {
+          // Seller needs admin approval
+          msgBox.className = 'alert alert-warning';
+          msgBox.innerHTML = `
+            <strong>Registration Submitted!</strong><br>
+            Your seller application for <em>"${shopName}"</em> is pending admin approval.<br>
+            Once approved by an admin, you can log in to your Seller Dashboard.
+          `;
+          msgBox.style.display = 'block';
+          regForm.reset();
+          toggleShopField();
+          regBtn.disabled = false;
+          regBtn.textContent = 'Register Account';
+        } else {
+          // Customer auto logs in
+          saveLogin(res);
+          msgBox.className = 'alert alert-success';
+          msgBox.textContent = 'Registration successful! Welcome to MiniMart. Redirecting...';
+          msgBox.style.display = 'block';
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 800);
+        }
+      } catch (err) {
+        msgBox.className = 'alert alert-danger';
+        msgBox.textContent = err.message || 'Registration failed. Please try again.';
+        msgBox.style.display = 'block';
+        regBtn.disabled = false;
+        regBtn.textContent = 'Register Account';
+      }
+    });
+  </script>
+</body>
+</html>
