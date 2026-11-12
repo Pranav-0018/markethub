@@ -42,11 +42,16 @@ async function main() {
         process.exit(1);
       }
 
+      // Optional custom parameters: node test-backend.js add "Product Name" 1999 15
+      const customName = process.argv[3] || 'Backend Drone 4K Pro';
+      const customPrice = Number(process.argv[4]) || 7999;
+      const customStock = Number(process.argv[5]) || 10;
+
       const newProduct = await Product.create({
-        name: 'Backend Drone 4K Pro',
-        description: 'Professional high-definition drone added directly from backend script.',
-        price: 7999,
-        stock: 10,
+        name: customName,
+        description: `High quality ${customName} added directly from the backend command prompt.`,
+        price: customPrice,
+        stock: customStock,
         category: category._id,
         seller: seller._id,
         image: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=500'
