@@ -119,11 +119,12 @@ Open your browser and navigate to: **`http://localhost:5000`**
 | Role | Email | Password | Details |
 | :--- | :--- | :--- | :--- |
 | **Admin** | `admin@shop.com` | `admin123` | Full platform control, approves sellers, views 10% commission reports |
-| **Seller 1** | `seller.tech@shop.com` | `seller123` | *Apex Electronics* (Approved seller) |
-| **Seller 2** | `seller.fashion@shop.com` | `seller123` | *Vogue Trendz* (Approved seller) |
-| **Seller 3** | `seller.grocery@shop.com` | `seller123` | *Organic Harvest Market* (Approved seller) |
+| **Seller 1** | `seller.tech@shop.com` | `seller123` | *Apex Electronics & Gear* (Electronics, Sports & Fitness) |
+| **Seller 2** | `seller.fashion@shop.com` | `seller123` | *Vogue Trendz & Beauty* (Fashion, Beauty & Personal Care) |
+| **Seller 3** | `seller.grocery@shop.com` | `seller123` | *Organic Harvest Market* (Grocery & Superfoods) |
+| **Seller 4** | `seller.books@shop.com` | `seller123` | *Horizon Books & Living* (Books & Stationery, Home & Living) |
 | **Customer** | `user@shop.com` | `user123` | *Rahul Customer* (Can browse, purchase, review) |
-| **Pending Seller** | `karan@newshop.com` | `seller123` | *Karan Book Depot* (Use to test Admin approval workflow) |
+| **Pending Seller** | `neha@greenery.com` | `seller123` | *Urban Bloom Nursery* (Use to test Admin approval workflow) |
 
 > 💡 **Viva Tip:** On the `login.html` page, click any of the **Quick Fill Demo Accounts** buttons to populate credentials instantly with one click!
 
